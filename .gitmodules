@@ -1,0 +1,6 @@
+[submodule "deps/Lunaris/console"]
+	path = deps/Lunaris/console
+	url = https://github.com/LunarisLib/Lunaris-Console
+[submodule "deps/Lunaris/event_pool"]
+	path = deps/Lunaris/event_pool
+	url = https://github.com/LunarisLib/Lunaris-Event-Pool

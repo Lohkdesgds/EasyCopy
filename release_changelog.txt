@@ -1,0 +1,2 @@
+Compiled to Windows and Linux using Github Actions.
+Not tested because I had no time, but under Windows I used it before. Good luck!
