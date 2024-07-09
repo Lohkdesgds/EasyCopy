@@ -74,7 +74,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body_path: release_changelog.txt
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}-ga
           files: |
             release_ubuntu/EasyCopy_ubuntu
             release_windows/EasyCopy_windows.exe
