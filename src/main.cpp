@@ -52,6 +52,8 @@ int main(int argc, char* argv[])
 	const custom_string				a_params(argc > 3 ? argv[3] : "");
 	//custom_fstream					log = argc > 3 ? custom_fstream(std::string(argv[3])) : custom_fstream(false);
 
+	std::filesystem::create_directories(a_targ);
+
 	std::atomic_size_t made_count = 0, read_count = 0, err_count = 0;
 	event_pool_async<std::function<void()>> event_pool([](auto&& f) { if (f) { f(); } }, g_thread_copy_count);
 
@@ -171,6 +173,8 @@ int main(int argc, char* argv[])
 
 	Lunaris::cout << console::color::GREEN << "Queued all tasks...";
 
+	if (a_params & 'L') Lunaris::cout << console::color::GOLD << "Stats ([L]og) are shown every 10 seconds.";
+
 	do {
 		const auto thrinf = event_pool.get_threads_status();
 
@@ -189,6 +193,24 @@ int main(int argc, char* argv[])
 		const std::string title = (std::to_string(static_cast<unsigned long>(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - run_time_started).count())) +
 			" sec | DONE;TOTAL;QUEUED;ERRORS: " + std::to_string(made_count) + ";" + std::to_string(read_count) + ";" + std::to_string(event_pool.size_queued()) + ";" + std::to_string(err_count) +
 			" | POOL Load: " + std::to_string(thr_in_use_count * 100.0 / event_pool.thread_count()) + "% | Averages: WAIT;RUN (sec): " + std::to_string(avg_latencies[0]) + ";" + std::to_string(avg_latencies[1]));
+
+		if (a_params & 'L') {
+			constexpr uint8_t local_counter_limit = 10; // sec, approx
+			static uint8_t local_counter = local_counter_limit;
+
+			if (++local_counter >= local_counter_limit) {
+				local_counter = 0;
+				Lunaris::cout 
+					<< console::color::GOLD << "================== Run periodic report log (" << (std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now() - run_time_started).count()) << " sec(s)) ==================\n"
+					<< console::color::GOLD << "Done: " << console::color::DARK_GREEN << made_count << "\n"
+					<< console::color::GOLD << "Total: " << console::color::DARK_GRAY << read_count << "\n"
+					<< console::color::GOLD << "Queued: " << console::color::DARK_PURPLE << event_pool.size_queued() << "\n"
+					<< console::color::GOLD << "Errors: " << console::color::DARK_RED << err_count << "\n"
+					<< console::color::GOLD << "Pool load: " << console::color::DARK_AQUA << std::to_string(thr_in_use_count * 100.0 / event_pool.thread_count()) << "%\n"
+					<< console::color::GOLD << "Average times: " << console::color::DARK_AQUA << std::to_string(avg_latencies[0]) + " wait, " + std::to_string(avg_latencies[1]) << " run";
+			}
+		}
+
 #ifdef _WIN32
 		SetConsoleTitleA(
 			title.c_str()
@@ -198,7 +220,7 @@ int main(int argc, char* argv[])
 #endif
 
 		std::this_thread::yield();
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	} while (event_pool.has_task_running() || async_list.wait_for(std::chrono::seconds(0)) != std::future_status::ready);
 
 #ifdef _WIN32
